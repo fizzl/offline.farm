@@ -41,20 +41,31 @@ jobs:
         run: |
           # Define the directory to check
           DIR_TO_CHECK=".github/workflows"
-          # Compute hashes for all files in the directory on PR and base branches, normalize paths for comparison
-          PR_HASHES=$(cd $GITHUB_WORKSPACE && find "$DIR_TO_CHECK" -type f -exec sha256sum {} + | sort -k 2)
-          BASE_HASHES=$(cd $GITHUB_WORKSPACE/base && find "$DIR_TO_CHECK" -type f -exec sha256sum {} + | sort -k 2)
+          
+          # Go to the GitHub workspace
+          cd $GITHUB_WORKSPACE
+
+          # Compute hashes for all files in the directory on PR branch, sort by file path
+          PR_HASHES=$(find "$DIR_TO_CHECK" -type f -exec sha256sum {} + | sort -k 2)
+
+          # Change to the base directory and compute hashes there
+          cd base
+          BASE_HASHES=$(find "$DIR_TO_CHECK" -type f -exec sha256sum {} + | sort -k 2)
+
+          # Go back to the initial directory
+          cd ..
+
           # Log the output for diagnosis
           echo "PR hashes:"
           echo "$PR_HASHES"
           echo "Base hashes:"
           echo "$BASE_HASHES"
-          # Compare hashes, normalize file paths for diff
-          if ! diff <(echo "$PR_HASHES" | sed 's|^\([^ ]* \)\./|\1|') <(echo "$BASE_HASHES" | sed 's|^\([^ ]* \)\./|\1|') > /dev/null; then
+
+          # Compare hashes, output differences if found
+          if ! diff <(echo "$PR_HASHES") <(echo "$BASE_HASHES") > /dev/null; then
             echo "Changes detected in $DIR_TO_CHECK."
-            # Output the differences
             echo "Differences detected:"
-            diff <(echo "$PR_HASHES" | sed 's|^\([^ ]* \)\./|\1|') <(echo "$BASE_HASHES" | sed 's|^\([^ ]* \)\./|\1|')
+            diff <(echo "$PR_HASHES") <(echo "$BASE_HASHES")
             exit 1
           else
             echo "No changes detected in $DIR_TO_CHECK."
