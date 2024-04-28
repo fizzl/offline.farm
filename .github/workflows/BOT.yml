@@ -41,9 +41,9 @@ jobs:
         run: |
           # Define the directory to check
           DIR_TO_CHECK=".github/workflows"
-          # Compute hashes for all files in the directory on PR and base branches, including relative paths
-          PR_HASHES=$(find "$DIR_TO_CHECK" -type f -exec sha256sum {} + | sort)
-          BASE_HASHES=$(find "base/$DIR_TO_CHECK" -type f -exec sha256sum {} + | sort)
+          # Compute hashes for all files in the directory on PR and base branches, normalize paths for comparison
+          PR_HASHES=$(find "$DIR_TO_CHECK" -type f -exec sha256sum {} + | sed 's|./||' | sort)
+          BASE_HASHES=$(find "base/$DIR_TO_CHECK" -type f -exec sha256sum {} + | sed 's|base/||' | sort)
           # Log the output for diagnosis
           echo "PR hashes:"
           echo "$PR_HASHES"
