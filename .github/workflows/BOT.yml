@@ -56,5 +56,7 @@ jobs:
             echo "Directory $DIR_TO_CHECK was modified. Exiting with error."
             exit 1
           fi
-      - name: Additional merge steps
-        run: echo "Add further steps here"
+      - name: Auto approve
+        uses: hmarr/auto-approve-action@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
