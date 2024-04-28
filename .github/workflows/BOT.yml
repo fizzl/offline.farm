@@ -1,0 +1,41 @@
+name: Auto Merge Pull Requests
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+      - name: Check file hashes
+        run: |
+          # Define files to check
+          FILES_TO_CHECK="index.html CNAME robots.txt README.md"
+          # Initialize flag
+          CHANGED="no"
+          # Loop through files and compare hashes
+          for FILE in $FILES_TO_CHECK; do
+            # Compute hashes
+            PR_HASH=$(sha256sum "$FILE" | cut -d ' ' -f 1)
+            BASE_HASH=$(sha256sum "base/$FILE" | cut -d ' ' -f 1)
+            # Compare hashes
+            if [ "$PR_HASH" != "$BASE_HASH" ]; then
+              echo "File $FILE has been modified."
+              CHANGED="yes"
+            fi
+          done
+          # Fail job if any file has been modified
+          if [ "$CHANGED" = "yes" ]; then
+            echo "Some files were modified. Exiting with error."
+            exit 1
+          fi
+      - name: Additional merge steps
+        run: echo "Add further steps here"
