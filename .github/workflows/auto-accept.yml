@@ -1,6 +1,6 @@
 name: Auto Merge Pull Requests
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, reopened, synchronize]
 jobs:
   auto-merge:
@@ -18,4 +18,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MERGE_METHOD: squash # Change to merge or rebase as required
           MERGE_COMMIT_MESSAGE: "Automated merge of pull request #${{ github.event.pull_request.number }}"
-          MERGE_FILTER_AUTHOR: "dependabot[bot]" # Optional: Change this to restrict which author's PRs to merge automatically
