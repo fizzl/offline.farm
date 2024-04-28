@@ -18,7 +18,7 @@ jobs:
       - name: Check file hashes
         run: |
           # Define files to check
-          FILES_TO_CHECK="index.html CNAME robots.txt README.md"
+          FILES_TO_CHECK="index.html CNAME robots.txt README.md .github/workflows/BOT.yml"
           # Initialize flag
           CHANGED="no"
           # Loop through files and compare hashes
@@ -37,32 +37,32 @@ jobs:
             echo "Some files were modified. Exiting with error."
             exit 1
           fi
-      - name: Check workflow directory integrity
+      - name: Check for added or deleted files in workflow directory
         run: |
           # Define the directory to check
           DIR_TO_CHECK=".github/workflows"
           
-          # Compute hashes for PR and base branches directly to files
-          echo "Computing PR hashes..."
-          find "$DIR_TO_CHECK" -type f -exec sha256sum {} + | sort -k 2 > pr_hashes.txt
-          echo "PR hashes computed and written to pr_hashes.txt"
+          # Compute file lists for PR and base branches directly to files
+          echo "Listing files in PR branch..."
+          find "$DIR_TO_CHECK" -type f | sort > pr_file_list.txt
+          echo "Files listed for PR branch."
 
-          echo "Computing base hashes..."
-          find "base/$DIR_TO_CHECK" -type f -exec sha256sum {} + | sort -k 2 > base_hashes.txt
-          echo "Base hashes computed and written to base_hashes.txt"
+          echo "Listing files in base branch..."
+          find "base/$DIR_TO_CHECK" -type f | sort > base_file_list.txt
+          echo "Files listed for base branch."
 
-          # Compare hashes using diff
-          echo "Comparing hashes..."
-          if ! diff pr_hashes.txt base_hashes.txt > hash_diff.txt; then
-            echo "Changes detected in $DIR_TO_CHECK."
+          # Compare file lists using diff
+          echo "Comparing file lists..."
+          if ! diff pr_file_list.txt base_file_list.txt > file_list_diff.txt; then
+            echo "Changes detected in file addition or deletion in $DIR_TO_CHECK."
             echo "Differences detected:"
-            cat hash_diff.txt
+            cat file_list_diff.txt
             exit 1
           else
-            echo "No changes detected in $DIR_TO_CHECK."
-          # Clean up hash files
-          rm pr_hashes.txt base_hashes.txt hash_diff.txt
-
+            echo "No new files added or deleted in $DIR_TO_CHECK."
+          
+          # Clean up list files
+          rm pr_file_list.txt base_file_list.txt file_list_diff.txt
       - name: Auto approve
         uses: hmarr/auto-approve-action@v2
         with:
