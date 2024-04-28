@@ -44,16 +44,16 @@ jobs:
           # Initialize flag
           CHANGED="no"
           # Compute hashes for all files in the directory on PR and base branches
-          PR_HASHES=$(find "$DIR_TO_CHECK" -type f -exec sha256sum {} \; | sort)
-          BASE_HASHES=$(find "base/$DIR_TO_CHECK" -type f -exec sha256sum {} \; | sort)
-          # Compare hashes
+          PR_HASHES=$(find "$DIR_TO_CHECK" -type f -exec sha256sum {} + | sort)
+          BASE_HASHES=$(find "base/$DIR_TO_CHECK" -type f -exec sha256sum {} + | sort)
+          # Compare hashes including the file paths
           if ! diff <(echo "$PR_HASHES") <(echo "$BASE_HASHES") > /dev/null; then
-            echo "Directory $DIR_TO_CHECK has been modified."
+            echo "Changes detected in $DIR_TO_CHECK."
             CHANGED="yes"
           fi
-          # Fail job if directory has been modified
+          # Fail job if directory has been modified or new files have been added
           if [ "$CHANGED" = "yes" ]; then
-            echo "Directory $DIR_TO_CHECK was modified. Exiting with error."
+            echo "$DIR_TO_CHECK was modified or new files were added. Exiting with error."
             exit 1
           fi
       - name: Auto approve
