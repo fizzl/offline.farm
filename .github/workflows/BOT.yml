@@ -41,28 +41,54 @@ jobs:
         run: |
           # Define the directory to check
           DIR_TO_CHECK=".github/workflows"
-          
-          # Compute file lists for PR and base branches directly to files
+
+          # Listing files and output their names
           echo "Listing files in PR branch..."
-          find "$DIR_TO_CHECK" -type f | sort > pr_file_list.txt
-          echo "Files listed for PR branch."
-
-          echo "Listing files in base branch..."
-          find "base/$DIR_TO_CHECK" -type f | sort > base_file_list.txt
-          echo "Files listed for base branch."
-
-          # Compare file lists using diff
-          echo "Comparing file lists..."
-          if ! diff pr_file_list.txt base_file_list.txt > file_list_diff.txt; then
-            echo "Changes detected in file addition or deletion in $DIR_TO_CHECK."
-            echo "Differences detected:"
-            cat file_list_diff.txt
-            exit 1
-          else
-            echo "No new files added or deleted in $DIR_TO_CHECK."
+          PR_FILES=($(find "$DIR_TO_CHECK" -type f | sort))
+          echo "PR branch files:"
+          printf "%s\n" "${PR_FILES[@]}"
           
-          # Clean up list files
-          rm pr_file_list.txt base_file_list.txt file_list_diff.txt
+          echo "Listing files in base branch..."
+          BASE_FILES=($(cd base && find "$DIR_TO_CHECK" -type f | sort))
+          echo "Base branch files:"
+          printf "%s\n" "${BASE_FILES[@]}"
+
+          # Function to compare arrays
+          compare_file_lists() {
+            local -n _pr_files=$1
+            local -n _base_files=$2
+            local changes_found=0
+
+            # Create associative arrays
+            declare -A file_map
+            for file in "${_pr_files[@]}"; do
+                file_map["$file"]=1
+            done
+            for file in "${_base_files[@]}"; do
+                if [[ -z "${file_map["$file"]}" ]]; then
+                    echo "File added: $file"
+                    changes_found=1
+                else
+                    unset file_map["$file"]
+                fi
+            done
+            for file in "${!file_map[@]}"; do
+                echo "File deleted: $file"
+                changes_found=1
+            done
+
+            return $changes_found
+          }
+
+          # Compare file lists
+          echo "Comparing file lists..."
+          if compare_file_lists PR_FILES BASE_FILES; then
+            echo "No new files added or deleted in $DIR_TO_CHECK."
+          else
+            echo "File additions or deletions detected in $DIR_TO_CHECK."
+            exit 1
+          fi
+
       - name: Auto approve
         uses: hmarr/auto-approve-action@v2
         with:
