@@ -3,15 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>offline.farm</title>
-    <script>
-        fetch("edit-me").then(response => {
-            response.text().then(text => {
-
-                const main = document.getElementsByTagName("main")[0];
-                main.innerHTML = text;
-                
-            });
-        });
+    <script type='module'>
+        fetch("edit-me.html").then(response => response.text())
+                             .then(text => document.querySelector('main').innerHTML = text);
     </script>
 </head>
 <body style="margin: 0 !important;">
