@@ -41,21 +41,24 @@ jobs:
         run: |
           # Define the directory to check
           DIR_TO_CHECK=".github/workflows"
-          # Initialize flag
-          CHANGED="no"
-          # Compute hashes for all files in the directory on PR and base branches
+          # Compute hashes for all files in the directory on PR and base branches, including relative paths
           PR_HASHES=$(find "$DIR_TO_CHECK" -type f -exec sha256sum {} + | sort)
           BASE_HASHES=$(find "base/$DIR_TO_CHECK" -type f -exec sha256sum {} + | sort)
+          # Log the output for diagnosis
+          echo "PR hashes:"
+          echo "$PR_HASHES"
+          echo "Base hashes:"
+          echo "$BASE_HASHES"
           # Compare hashes including the file paths
           if ! diff <(echo "$PR_HASHES") <(echo "$BASE_HASHES") > /dev/null; then
             echo "Changes detected in $DIR_TO_CHECK."
-            CHANGED="yes"
-          fi
-          # Fail job if directory has been modified or new files have been added
-          if [ "$CHANGED" = "yes" ]; then
-            echo "$DIR_TO_CHECK was modified or new files were added. Exiting with error."
+            # Output the differences
+            echo "Differences detected:"
+            diff <(echo "$PR_HASHES") <(echo "$BASE_HASHES")
             exit 1
-          fi
+          else
+            echo "No changes detected in $DIR_TO_CHECK."
+
       - name: Auto approve
         uses: hmarr/auto-approve-action@v2
         with:
