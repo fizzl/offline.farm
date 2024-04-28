@@ -1,2 +1,1 @@
-# offline.farm
-all pull-requests are automatically accepted.
+ALL PULL REQUESTS ARE AUTOMATICALLY MERGED ASSUMING YOU DON'T EDIT index.html, CNAME, robots.txt, or README.md
