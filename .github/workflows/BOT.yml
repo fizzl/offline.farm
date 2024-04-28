@@ -46,26 +46,35 @@ jobs:
           cd $GITHUB_WORKSPACE
 
           # Compute hashes for all files in the directory on PR branch, sort by file path
+          echo "Computing PR hashes..."
           PR_HASHES=$(find "$DIR_TO_CHECK" -type f -exec sha256sum {} + | sort -k 2)
+          echo "PR hashes computed."
 
           # Change to the base directory and compute hashes there
+          echo "Changing to base directory..."
           cd base
+          echo "Computing base hashes..."
           BASE_HASHES=$(find "$DIR_TO_CHECK" -type f -exec sha256sum {} + | sort -k 2)
+          echo "Base hashes computed."
 
-          # Go back to the initial directory
+          # Return to initial directory
           cd ..
 
-          # Log the output for diagnosis
+          # Output hashes for diagnostics
           echo "PR hashes:"
           echo "$PR_HASHES"
           echo "Base hashes:"
           echo "$BASE_HASHES"
 
-          # Compare hashes, output differences if found
-          if ! diff <(echo "$PR_HASHES") <(echo "$BASE_HASHES") > /dev/null; then
+          # Save output of diff to a variable to simplify error handling
+          echo "Comparing hashes..."
+          DIFF_OUTPUT=$(diff <(echo "$PR_HASHES") <(echo "$BASE_HASHES"))
+          DIFF_EXIT_CODE=$?
+
+          if [ "$DIFF_EXIT_CODE" -ne 0 ]; then
             echo "Changes detected in $DIR_TO_CHECK."
             echo "Differences detected:"
-            diff <(echo "$PR_HASHES") <(echo "$BASE_HASHES")
+            echo "$DIFF_OUTPUT"
             exit 1
           else
             echo "No changes detected in $DIR_TO_CHECK."
